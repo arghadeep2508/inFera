@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
-import { API_BASE_URL } from "@/lib/config";
+
+// ✅ FIXED IMPORT (VERCEL SAFE)
+import { API_BASE_URL } from "../../lib/config";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -32,7 +34,7 @@ export default function UploadPage() {
         body: formData,
       });
 
-      // Safe JSON parsing
+      // ✅ SAFE JSON PARSING (no crash if backend fails)
       let data: any = null;
       try {
         data = await res.json();
@@ -48,12 +50,12 @@ export default function UploadPage() {
 
       alert("✅ Upload successful");
 
-      // ✅ Use Next.js navigation (better UX, no reload)
+      // ✅ NEXT.JS ROUTING (no reload)
       router.push("/dashboard");
 
     } catch (err: any) {
       console.error("Upload Error:", err);
-      alert(err.message || "Something went wrong");
+      alert(err?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
