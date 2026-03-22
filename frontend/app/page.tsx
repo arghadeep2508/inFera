@@ -11,8 +11,11 @@ export default function Home() {
 
   const router = useRouter();
 
-  // ✅ FIXED: Use ENV instead of localhost
-  const API = process.env.NEXT_PUBLIC_API_URL + "/api";
+  // ✅ SAFE ENV HANDLING (VERY IMPORTANT)
+  const BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const API = `${BASE_URL}/api`;
 
   const handleUpload = async () => {
     if (!file) {
@@ -29,41 +32,45 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // ✅ UPLOAD
+      // ✅ UPLOAD REQUEST
       const uploadRes = await fetch(`${API}/upload/`, {
         method: "POST",
         body: formData,
       });
 
-      const uploadData = await uploadRes.json();
-
       if (!uploadRes.ok) {
-        throw new Error(uploadData.detail || "Upload failed");
+        const errorData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Upload failed");
       }
 
-      // ✅ TRAIN
       setMessage("Training model...");
 
+      // ✅ TRAIN REQUEST
       const trainRes = await fetch(`${API}/train/`, {
         method: "POST",
       });
 
-      const trainData = await trainRes.json();
-
       if (!trainRes.ok) {
-        throw new Error(trainData.detail || "Training failed");
+        const errorData = await trainRes.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Training failed");
       }
 
-      // ✅ SUCCESS
+      // ✅ SUCCESS FLOW
       setMessage("Ready. Redirecting...");
 
       setTimeout(() => {
         router.push("/dashboard");
       }, 600);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setMessage(err.message || "Something went wrong");
+
+      if (err instanceof Error) {
+        setMessage(err.message);
+      } else {
+        setMessage("Something went wrong");
+      }
+
     } finally {
       setLoading(false);
     }
