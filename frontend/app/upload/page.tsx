@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // ✅ SAFE ENV HANDLING
-  const API =
-    process.env.NEXT_PUBLIC_API_URL
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-      : "";
+  const router = useRouter();
 
   const handleUpload = async () => {
     if (!file) {
@@ -19,7 +16,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (!API) {
+    if (!API_BASE_URL) {
       alert("API URL not configured");
       return;
     }
@@ -30,12 +27,12 @@ export default function UploadPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API}/upload/`, {
+      const res = await fetch(`${API_BASE_URL}/api/upload/`, {
         method: "POST",
         body: formData,
       });
 
-      // ✅ SAFE RESPONSE PARSING
+      // Safe JSON parsing
       let data: any = null;
       try {
         data = await res.json();
@@ -51,8 +48,8 @@ export default function UploadPage() {
 
       alert("✅ Upload successful");
 
-      // ✅ CLEAN NAVIGATION (no reload issue)
-      window.location.href = "/dashboard";
+      // ✅ Use Next.js navigation (better UX, no reload)
+      router.push("/dashboard");
 
     } catch (err: any) {
       console.error("Upload Error:", err);
