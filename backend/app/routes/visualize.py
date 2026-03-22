@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 import pandas as pd
 import os
 
@@ -11,16 +11,31 @@ DEFAULT_PREVIEW_ROWS = 20
 MAX_PREVIEW_ROWS = 50
 
 
+# -----------------------------
+# 🔥 SAFE DATA LOADER (IMPORTANT)
+# -----------------------------
+def get_df(request: Request):
+    # 1. Try memory first
+    if hasattr(request.app.state, "df") and request.app.state.df is not None:
+        return request.app.state.df
+
+    # 2. Fallback to file
+    if os.path.exists(DATA_PATH):
+        return pd.read_csv(DATA_PATH)
+
+    return None
+
+
 @router.get("/visualize/")
-def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
+def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
     try:
         # -----------------------------
-        # CHECK DATASET
+        # LOAD DATASET (FIXED 🔥)
         # -----------------------------
-        if not os.path.exists(DATA_PATH):
-            raise HTTPException(status_code=400, detail="No dataset uploaded")
+        df = get_df(request)
 
-        df = pd.read_csv(DATA_PATH)
+        if df is None:
+            raise HTTPException(status_code=400, detail="No dataset uploaded")
 
         if df.empty:
             raise HTTPException(status_code=400, detail="Dataset is empty")
@@ -31,7 +46,7 @@ def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
         df.columns = [col.strip() for col in df.columns]
 
         # -----------------------------
-        # LIMIT CONTROL (🔥 IMPORTANT)
+        # LIMIT CONTROL
         # -----------------------------
         if limit > MAX_PREVIEW_ROWS:
             limit = MAX_PREVIEW_ROWS
@@ -46,7 +61,7 @@ def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
         categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
 
         # -----------------------------
-        # SUMMARY STATS (SAFE JSON)
+        # SUMMARY STATS
         # -----------------------------
         summary = {}
 
@@ -62,11 +77,11 @@ def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
                 }
 
         # -----------------------------
-        # CATEGORY ANALYSIS (LIMITED)
+        # CATEGORY ANALYSIS
         # -----------------------------
         category_analysis = {}
 
-        for col in categorical_cols[:5]:  # limit columns
+        for col in categorical_cols[:5]:
             category_analysis[col] = (
                 df[col]
                 .value_counts()
@@ -75,25 +90,23 @@ def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
             )
 
         # -----------------------------
-        # CORRELATION (SAFE)
+        # CORRELATION
         # -----------------------------
         correlation = {}
 
         if len(numeric_cols) >= 2:
             corr_df = df[numeric_cols].corr()
 
-            # convert to float (JSON safe)
             correlation = {
                 col: {k: float(v) for k, v in corr_df[col].items()}
                 for col in corr_df.columns
             }
 
         # -----------------------------
-        # 🔥 PREVIEW DATA (CONTROLLED)
+        # PREVIEW DATA
         # -----------------------------
         preview_df = df.head(limit)
 
-        # Convert NaN → None (VERY IMPORTANT for JSON)
         preview = preview_df.where(pd.notnull(preview_df), None).to_dict(orient="records")
 
         # -----------------------------
@@ -111,7 +124,6 @@ def visualize(limit: int = Query(DEFAULT_PREVIEW_ROWS)):
             "category_analysis": category_analysis,
             "correlation": correlation,
 
-            # 🔥 NEW FEATURE
             "preview": preview,
             "preview_count": int(limit),
         }
