@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   ROOT THEME
+========================= */
+
+:root {
+  --bg: #020617;
+  --card: #0f172a;
+  --primary: #7c3aed;
+  --secondary: #06b6d4;
+  --text: #ffffff;
+  --muted: #94a3b8;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+
+.neon-bg {
+  background: radial-gradient(circle at top left, #0f172a, #020617);
+}
+
+/* =========================
+   GLASS CARD (ENHANCED)
+========================= */
+
+.glass-card {
+  border-radius: 16px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 40px rgba(124, 58, 237, 0.25);
+}
+
+/* =========================
+   NEON BORDER
+========================= */
+
+.neon-border {
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  box-shadow:
+    0 0 10px rgba(124, 58, 237, 0.3),
+    0 0 25px rgba(6, 182, 212, 0.15);
+}
+
+/* =========================
+   LOGO GLOW
+========================= */
+
+.neon-logo {
+  padding: 6px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 15px #7c3aed,
+    0 0 30px #06b6d4,
+    0 0 50px rgba(6, 182, 212, 0.3);
+}
+
+/* =========================
+   CARD (UPGRADED)
+========================= */
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  transition: all 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 35px rgba(124, 58, 237, 0.25);
+}
+
+/* =========================
+   BUTTONS (PRO LEVEL)
+========================= */
+
+.btn-primary {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: white;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 0 20px rgba(124, 58, 237, 0.8),
+    0 0 30px rgba(6, 182, 212, 0.6);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* SECONDARY BUTTON */
+
+.btn-secondary {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: #06b6d4;
+  background: transparent;
+  transition: 0.25s;
+}
+
+.btn-secondary:hover {
+  background: rgba(6, 182, 212, 0.1);
+}
+
+/* BACKWARD COMPATIBILITY (IMPORTANT) */
+
+.btn-green {
+  @apply btn-primary;
+}
+
+.btn-blue {
+  @apply btn-secondary;
+}
+
+/* =========================
+   INPUT (UPGRADED UX)
+========================= */
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.input::placeholder {
+  color: #64748b;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
+}
+
+/* =========================
+   CHART FIX (IMPORTANT 🔥)
+========================= */
+
+/* Prevent tooltip overflow */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Improve chart readability */
+.recharts-cartesian-axis-tick-value {
+  fill: #94a3b8;
+  font-size: 12px;
+}
+
+.recharts-tooltip-label {
+  color: black;
+}
+
+/* =========================
+   TEXT UTILITIES
+========================= */
+
+.text-muted {
+  color: var(--muted);
+}
+
+.text-glow {
+  text-shadow:
+    0 0 10px rgba(124, 58, 237, 0.7),
+    0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+/* =========================
+   SCROLLBAR (PREMIUM)
+========================= */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed, #06b6d4);
+  border-radius: 10px;
+}
+
+/* =========================
+   SMOOTH TRANSITIONS
+========================= */
+
+* {
+  transition: background 0.2s ease, border 0.2s ease;
+}

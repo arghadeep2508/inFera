@@ -1,0 +1,19 @@
+# Node
+node_modules/
+.next/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
