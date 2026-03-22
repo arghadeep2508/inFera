@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 
-// ✅ FIXED IMPORT (VERCEL SAFE)
-import { API_BASE_URL } from "../../lib/config";
-
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // ✅ SAFE API (NO IMPORTS, NO ERRORS)
+  const API =
+    process.env.NEXT_PUBLIC_API_URL
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+      : "";
 
   const handleUpload = async () => {
     if (!file) {
@@ -18,7 +21,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (!API_BASE_URL) {
+    if (!API) {
       alert("API URL not configured");
       return;
     }
@@ -29,12 +32,12 @@ export default function UploadPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE_URL}/api/upload/`, {
+      const res = await fetch(`${API}/upload/`, {
         method: "POST",
         body: formData,
       });
 
-      // ✅ SAFE JSON PARSING (no crash if backend fails)
+      // ✅ SAFE JSON PARSING
       let data: any = null;
       try {
         data = await res.json();
@@ -50,7 +53,7 @@ export default function UploadPage() {
 
       alert("✅ Upload successful");
 
-      // ✅ NEXT.JS ROUTING (no reload)
+      // ✅ SMOOTH NAVIGATION
       router.push("/dashboard");
 
     } catch (err: any) {
