@@ -49,18 +49,24 @@ app.state.target_column = None
 
 
 # -----------------------------
-# CORS CONFIG
+# 🔥 CORS CONFIG (FIXED FINAL)
 # -----------------------------
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://in-fera.vercel.app",   # ✅ YOUR FRONTEND (IMPORTANT)
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=origins,          # ✅ specific allowed domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ⚠️ DEBUG OPTION (if still fails, temporarily use this)
+# allow_origins=["*"]
 
 
 # -----------------------------
