@@ -13,7 +13,8 @@ import {
 } from "recharts";
 
 export default function Dashboard() {
-  const API = "http://127.0.0.1:8000/api";
+  // ✅ FIXED: Use ENV instead of localhost
+  const API = process.env.NEXT_PUBLIC_API_URL + "/api";
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,7 @@ export default function Dashboard() {
   const [columns, setColumns] = useState<string[]>([]);
   const [target, setTarget] = useState<string>("");
 
-  const [inputData, setInputData] = useState<any>({});
+  const [inputData, setInputData] = useState<Record<string, string>>({});
 
   const [prediction, setPrediction] = useState<any>(null);
   const [forecast, setForecast] = useState<any>(null);
@@ -31,9 +32,9 @@ export default function Dashboard() {
 
   const [previewLimit, setPreviewLimit] = useState(20);
 
-  // 🔥 CHAT STATE (UPGRADED)
+  // CHAT
   const [chatInput, setChatInput] = useState("");
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ role: string; text: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +56,7 @@ export default function Dashboard() {
         setColumns(colData.columns);
         setTarget(colData.target);
 
-        const obj: any = {};
+        const obj: Record<string, string> = {};
         colData.columns.forEach((c: string) => {
           if (c !== colData.target) obj[c] = "";
         });
@@ -79,7 +80,7 @@ export default function Dashboard() {
     fetchAll();
   }, [previewLimit]);
 
-  // 🔥 AUTO SCROLL CHAT
+  // AUTO SCROLL CHAT
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
@@ -135,7 +136,7 @@ export default function Dashboard() {
   };
 
   // -----------------------------
-  // 🔥 CHAT FUNCTION (UPGRADED)
+  // CHAT
   // -----------------------------
   const handleChat = async () => {
     if (!chatInput.trim()) return;
@@ -219,14 +220,12 @@ export default function Dashboard() {
       <div className="p-10 space-y-8 text-white">
         <h1 className="text-3xl font-bold">📊 Dashboard</h1>
 
-        {/* STATS */}
         <div className="grid md:grid-cols-3 gap-6">
           <Card title="Rows" value={rows} />
           <Card title="Columns" value={cols} />
           <Card title="Numeric Columns" value={numeric.length} />
         </div>
 
-        {/* PREVIEW CONTROL */}
         <div className="flex justify-end">
           <select
             value={previewLimit}
@@ -239,197 +238,56 @@ export default function Dashboard() {
           </select>
         </div>
 
-        {/* DATA PREVIEW */}
-        <Section title={`📄 Data Preview (${data.preview_count} rows)`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border border-gray-700">
-              <thead className="bg-gray-800">
-                <tr>
-                  {data?.preview?.[0] &&
-                    Object.keys(data.preview[0]).map((col: string) => (
-                      <th key={col} className="p-2 border">
-                        {col}
-                      </th>
-                    ))}
+        {/* DATA TABLE */}
+        <div className="overflow-x-auto border rounded-xl">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-800">
+              <tr>
+                {data?.preview?.[0] &&
+                  Object.keys(data.preview[0]).map((col: string) => (
+                    <th key={col} className="p-2 border">{col}</th>
+                  ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data?.preview?.map((row: any, idx: number) => (
+                <tr key={idx}>
+                  {Object.values(row).map((val: any, i: number) => (
+                    <td key={i} className="p-2 border">{String(val)}</td>
+                  ))}
                 </tr>
-              </thead>
-
-              <tbody>
-                {data?.preview?.map((row: any, idx: number) => (
-                  <tr key={idx} className="hover:bg-gray-900">
-                    {Object.values(row).map((val: any, i: number) => (
-                      <td key={i} className="p-2 border">
-                        {String(val)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Section>
-
-        {/* AI INSIGHTS */}
-        <Section title="🤖 AI Insights">
-          {aiLoading ? (
-            <p>Generating insights...</p>
-          ) : (
-            <pre className="whitespace-pre-wrap text-sm text-green-400">
-              {aiInsights}
-            </pre>
-          )}
-        </Section>
-
-        {/* 🔥 PROFESSIONAL CHAT */}
-        <Section title="💬 Chat with your Data">
-          <div className="bg-black/30 border rounded-xl p-4 h-[350px] flex flex-col">
-
-            {/* CHAT MESSAGES */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-              {chatHistory.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`p-3 rounded-xl max-w-[80%] text-sm ${
-                    msg.role === "user"
-                      ? "ml-auto bg-blue-600/80 text-white"
-                      : "bg-gray-800 text-green-300"
-                  }`}
-                >
-                  {msg.text}
-                </div>
               ))}
+            </tbody>
+          </table>
+        </div>
 
-              {chatLoading && (
-                <div className="text-gray-400 text-sm">AI is thinking...</div>
-              )}
+        {/* AI */}
+        <div>
+          <h2>🤖 AI Insights</h2>
+          <pre className="text-green-400">{aiInsights}</pre>
+        </div>
 
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* INPUT */}
-            <div className="flex gap-2 mt-3">
-              <input
-                type="text"
-                placeholder="Ask anything about your data..."
-                className="flex-1 bg-black border rounded px-3 py-2 text-sm"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleChat()}
-              />
-
-              <button
-                onClick={handleChat}
-                className="bg-green-600 px-4 rounded text-sm hover:bg-green-700"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </Section>
-
-        {/* SUMMARY */}
-        <Section title="📈 Summary">
-          <div className="grid md:grid-cols-3 gap-4">
-            {Object.entries(data.summary || {}).map(([col, stats]: any) => (
-              <div key={col} className="p-4 bg-gray-900 rounded-xl">
-                <h3 className="font-bold mb-2">{col}</h3>
-
-                {stats.mean !== undefined ? (
-                  <div className="text-sm space-y-1">
-                    <p>Mean: {stats.mean?.toFixed(2)}</p>
-                    <p>Min: {stats.min}</p>
-                    <p>Max: {stats.max}</p>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-sm">
-                    Categorical feature
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* CHART */}
-        <Section title="📊 Feature Overview">
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={summaryChartData}>
-                <CartesianGrid stroke="#444" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line dataKey="value" stroke="#00ffcc" strokeWidth={3} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Section>
-
-        {/* PREDICTION */}
-        <Section title="🔮 Prediction">
-          <div className="grid md:grid-cols-3 gap-3">
-            {Object.keys(inputData).map((col) => (
-              <input
-                key={col}
-                placeholder={col}
-                className="input"
-                value={inputData[col] || ""}
-                onChange={(e) => handleChange(col, e.target.value)}
-              />
-            ))}
-          </div>
-
-          <div className="flex gap-3 mt-4">
-            <button onClick={handlePredict} className="btn-green">
-              Predict
-            </button>
-
-            <button onClick={handleForecast} className="btn-blue">
-              Forecast
-            </button>
-          </div>
-
-          {prediction && (
-            <div className="mt-4 text-green-400">
-              Result: {JSON.stringify(prediction)}
-            </div>
-          )}
-
-          {forecastChart && (
-            <div className="mt-6 h-80 bg-black/40 p-4 rounded-xl border">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastChart}>
-                  <CartesianGrid stroke="#444" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line dataKey="value" stroke="#00ffcc" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Section>
+        {/* CHAT */}
+        <div>
+          <input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="Ask..."
+            className="bg-black border px-3 py-2"
+          />
+          <button onClick={handleChat}>Send</button>
+        </div>
       </div>
     </>
   );
 }
 
-// UI COMPONENTS
-
-function Card({ title, value }: any) {
+// UI
+function Card({ title, value }: { title: string; value: number }) {
   return (
     <div className="p-6 bg-black/40 border rounded-xl">
-      <h3 className="text-gray-400">{title}</h3>
-      <p className="text-xl font-bold">{value}</p>
-    </div>
-  );
-}
-
-function Section({ title, children }: any) {
-  return (
-    <div className="p-6 bg-black/40 border rounded-xl">
-      <h2 className="text-lg font-semibold mb-3">{title}</h2>
-      {children}
+      <h3>{title}</h3>
+      <p>{value}</p>
     </div>
   );
 }
