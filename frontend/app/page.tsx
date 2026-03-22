@@ -10,7 +10,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
+
+  // ✅ FIXED: Use ENV instead of localhost
+  const API = process.env.NEXT_PUBLIC_API_URL + "/api";
 
   const handleUpload = async () => {
     if (!file) {
@@ -27,6 +29,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // ✅ UPLOAD
       const uploadRes = await fetch(`${API}/upload/`, {
         method: "POST",
         body: formData,
@@ -38,6 +41,7 @@ export default function Home() {
         throw new Error(uploadData.detail || "Upload failed");
       }
 
+      // ✅ TRAIN
       setMessage("Training model...");
 
       const trainRes = await fetch(`${API}/train/`, {
@@ -50,6 +54,7 @@ export default function Home() {
         throw new Error(trainData.detail || "Training failed");
       }
 
+      // ✅ SUCCESS
       setMessage("Ready. Redirecting...");
 
       setTimeout(() => {
