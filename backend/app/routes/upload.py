@@ -5,14 +5,22 @@ import os
 router = APIRouter()
 
 # -----------------------------
-# PATH
+# PATH (ABSOLUTE SAFE PATH)
 # -----------------------------
-DATA_PATH = "artifacts/data.csv"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ARTIFACTS_DIR = os.path.join(BASE_DIR, "artifacts")
+DATA_PATH = os.path.join(ARTIFACTS_DIR, "data.csv")
 
 
 @router.post("/upload/")
 async def upload_file(file: UploadFile = File(...), request: Request = None):
     try:
+        # -----------------------------
+        # VALIDATE FILE TYPE
+        # -----------------------------
+        if not file.filename.endswith(".csv"):
+            raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+
         # -----------------------------
         # READ CSV
         # -----------------------------
@@ -22,22 +30,22 @@ async def upload_file(file: UploadFile = File(...), request: Request = None):
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
         # -----------------------------
-        # CLEAN COLUMN NAMES (IMPORTANT)
+        # CLEAN COLUMN NAMES
         # -----------------------------
         df.columns = [col.strip() for col in df.columns]
 
         # -----------------------------
-        # CREATE ARTIFACTS FOLDER
+        # CREATE ARTIFACTS FOLDER (SAFE)
         # -----------------------------
-        os.makedirs("artifacts", exist_ok=True)
+        os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
         # -----------------------------
-        # SAVE DATASET (🔥 REQUIRED FOR AUTO FEATURES)
+        # SAVE DATASET (🔥 CRITICAL FIX)
         # -----------------------------
         df.to_csv(DATA_PATH, index=False)
 
         # -----------------------------
-        # STORE IN GLOBAL STATE
+        # STORE IN MEMORY (FAST ACCESS)
         # -----------------------------
         request.app.state.df = df
 
@@ -48,10 +56,10 @@ async def upload_file(file: UploadFile = File(...), request: Request = None):
         request.app.state.target_column = None
 
         # -----------------------------
-        # OPTIONAL: DELETE OLD ARTIFACTS (AUTO CLEAN)
+        # CLEAN OLD ARTIFACTS
         # -----------------------------
         for file_name in ["model.pkl", "columns.pkl", "encoders.pkl"]:
-            path = os.path.join("artifacts", file_name)
+            path = os.path.join(ARTIFACTS_DIR, file_name)
             if os.path.exists(path):
                 os.remove(path)
 
@@ -60,11 +68,11 @@ async def upload_file(file: UploadFile = File(...), request: Request = None):
         # -----------------------------
         return {
             "message": "Dataset uploaded successfully",
-            "rows": df.shape[0],
+            "rows": int(df.shape[0]),
             "columns": list(df.columns),
             "saved_to": DATA_PATH
         }
 
     except Exception as e:
-        print("🔥 UPLOAD ERROR:", e)
+        print("🔥 UPLOAD ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
