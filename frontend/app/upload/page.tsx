@@ -7,6 +7,9 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ FIXED: Use ENV instead of localhost
+  const API = process.env.NEXT_PUBLIC_API_URL + "/api";
+
   const handleUpload = async () => {
     if (!file) {
       alert("Please select a file");
@@ -19,21 +22,25 @@ export default function UploadPage() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://127.0.0.1:8000/api/upload/", {
+      const res = await fetch(`${API}/upload/`, {
         method: "POST",
         body: formData,
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Upload failed");
+        throw new Error(data.detail || "Upload failed");
       }
 
       alert("✅ Upload successful");
 
+      // ✅ Better navigation
       window.location.href = "/dashboard";
 
     } catch (err: any) {
-      alert(err.message);
+      console.error(err);
+      alert(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -41,11 +48,9 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-
       <Navbar />
 
       <div className="flex justify-center items-center h-[80vh]">
-
         <div className="p-10 bg-black/40 border border-gray-800 rounded-xl text-center">
 
           <h2 className="text-2xl mb-6">Upload Dataset</h2>
@@ -61,13 +66,17 @@ export default function UploadPage() {
 
           <button
             onClick={handleUpload}
-            className="bg-green-500 text-black px-6 py-2 rounded font-bold"
+            disabled={loading}
+            className={`px-6 py-2 rounded font-bold ${
+              loading
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-green-500 text-black"
+            }`}
           >
             {loading ? "Uploading..." : "Upload"}
           </button>
 
         </div>
-
       </div>
     </div>
   );
