@@ -7,12 +7,20 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ FIXED: Use ENV instead of localhost
-  const API = process.env.NEXT_PUBLIC_API_URL + "/api";
+  // ✅ SAFE ENV HANDLING
+  const API =
+    process.env.NEXT_PUBLIC_API_URL
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+      : "";
 
   const handleUpload = async () => {
     if (!file) {
       alert("Please select a file");
+      return;
+    }
+
+    if (!API) {
+      alert("API URL not configured");
       return;
     }
 
@@ -27,19 +35,27 @@ export default function UploadPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      // ✅ SAFE RESPONSE PARSING
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
       if (!res.ok) {
-        throw new Error(data.detail || "Upload failed");
+        throw new Error(
+          data?.detail || data?.message || "Upload failed"
+        );
       }
 
       alert("✅ Upload successful");
 
-      // ✅ Better navigation
+      // ✅ CLEAN NAVIGATION (no reload issue)
       window.location.href = "/dashboard";
 
     } catch (err: any) {
-      console.error(err);
+      console.error("Upload Error:", err);
       alert(err.message || "Something went wrong");
     } finally {
       setLoading(false);
@@ -67,10 +83,10 @@ export default function UploadPage() {
           <button
             onClick={handleUpload}
             disabled={loading}
-            className={`px-6 py-2 rounded font-bold ${
+            className={`px-6 py-2 rounded font-bold transition ${
               loading
                 ? "bg-gray-500 cursor-not-allowed"
-                : "bg-green-500 text-black"
+                : "bg-green-500 hover:bg-green-600 text-black"
             }`}
           >
             {loading ? "Uploading..." : "Upload"}
