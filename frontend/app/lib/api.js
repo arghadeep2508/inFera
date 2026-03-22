@@ -1,4 +1,12 @@
-const BASE_URL = "http://127.0.0.1:8000/api";
+/* =============================
+   BASE URL CONFIG (PRODUCTION SAFE 🔥)
+============================= */
+
+// ✅ Use ENV (Vercel) or fallback to localhost (dev)
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+    : "http://127.0.0.1:8000/api";
 
 /* -----------------------------
    COMMON FETCH HANDLER (UPGRADED 🔥)
@@ -26,7 +34,7 @@ const handleResponse = async (res) => {
 };
 
 /* -----------------------------
-   FETCH WITH TIMEOUT (NEW 🔥)
+   FETCH WITH TIMEOUT (ROBUST 🔥)
 ----------------------------- */
 const fetchWithTimeout = async (url, options = {}, timeout = 15000) => {
   const controller = new AbortController();
@@ -38,6 +46,11 @@ const fetchWithTimeout = async (url, options = {}, timeout = 15000) => {
       signal: controller.signal,
     });
     return res;
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("Request timeout. Server took too long.");
+    }
+    throw new Error("Network error. Unable to connect to server.");
   } finally {
     clearTimeout(id);
   }
@@ -116,7 +129,7 @@ export const forecast = async (data, years_ahead) => {
 };
 
 /* -----------------------------
-   🤖 AI INSIGHTS (NEW 🔥🔥🔥)
+   🤖 AI INSIGHTS
 ----------------------------- */
 export const getAIInsights = async () => {
   const res = await fetchWithTimeout(`${BASE_URL}/ai-insights/`);
