@@ -1,63 +1,81 @@
-# 🚀 inFera — AI-Powered Personal Data Scientist
+# inFera
 
-inFera is an end-to-end AI-powered data analysis platform that transforms raw datasets into insights, predictions, and interactive exploration.
+![Status](https://img.shields.io/badge/status-active-success)
+![Frontend](https://img.shields.io/badge/frontend-Next.js-black)
+![Backend](https://img.shields.io/badge/backend-FastAPI-green)
+![ML](https://img.shields.io/badge/ML-Scikit--Learn-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-> Upload data → Understand it → Predict outcomes → Interact with it
+**AI-Powered Personal Data Scientist**
 
----
-
-## 🔥 Features
-
-- 📊 Automatic Data Analysis (EDA)
-- 🤖 AI-generated insights
-- 🎯 Machine Learning predictions (real-time)
-- 💬 Chat with your data (natural language)
+inFera is an end-to-end data analysis platform that transforms raw datasets into meaningful insights, predictions, and interactive exploration.
 
 ---
 
-## 🧠 Tech Stack
+## Overview
 
-**Frontend**
-- Next.js
-- Tailwind CSS
-- Recharts
+inFera enables users to:
 
-**Backend**
-- FastAPI
-- Python
-
-**ML**
-- Scikit-learn
-- Pandas
-- NumPy
+- Analyze datasets automatically (EDA)  
+- Generate AI-driven insights  
+- Perform real-time machine learning predictions  
+- Interact with data using natural language  
 
 ---
 
-## ⚙️ How to Run
+## Features
 
-### Backend
-
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
-
-🌐 Live Demo
-👉 https://in-fera.vercel.app/⁠�
-
-(That’s **3 backticks** to close the code block)
+- Automated data analysis and summarization  
+- AI-generated insights and pattern detection  
+- Machine learning predictions (classification & regression)  
+- Interactive data chat interface  
 
 ---
 
-# ✅ THEN ADD FRONTEND SECTION
+## Tech Stack
 
-After that, paste this:
+Frontend:
+- Next.js  
+- Tailwind CSS  
+- Recharts  
 
-```md
-### Frontend
+Backend:
+- FastAPI  
+- Python  
 
-```bash
-cd frontend
-npm install
-npm run dev
+Machine Learning:
+- Scikit-learn  
+- Pandas  
+- NumPy  
 
+---
+
+## How to Run
+
+Backend:  
+cd backend  
+pip install -r requirements.txt  
+uvicorn main:app --reload  
+
+Frontend:  
+cd frontend  
+npm install  
+npm run dev  
+
+---
+
+## Live Demo
+
+https://in-fera.vercel.app/
+
+---
+
+## Note
+
+This project is intended for educational and demonstration purposes.
+
+---
+
+## Support
+
+If you find this project useful, consider giving it a star ⭐
