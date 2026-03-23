@@ -41,3 +41,23 @@ inFera is an end-to-end AI-powered data analysis platform that transforms raw da
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload
+
+🌐 Live Demo
+👉 https://in-fera.vercel.app/⁠�
+
+(That’s **3 backticks** to close the code block)
+
+---
+
+# ✅ THEN ADD FRONTEND SECTION
+
+After that, paste this:
+
+```md
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+
