@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query, Request
 import pandas as pd
 import os
+import math
 
 router = APIRouter()
 
-DATA_PATH = "artifacts/data.csv"
+# 🔥 FIXED PATH (works locally + Railway)
+DATA_PATH = "/app/artifacts/data.csv"
 
 # 🔥 CONFIG
 DEFAULT_PREVIEW_ROWS = 20
@@ -12,7 +14,19 @@ MAX_PREVIEW_ROWS = 50
 
 
 # -----------------------------
-# 🔥 SAFE DATA LOADER (IMPORTANT)
+# 🔥 SAFE FLOAT CONVERTER
+# -----------------------------
+def safe_float(x):
+    try:
+        if x is None or (isinstance(x, float) and math.isnan(x)):
+            return 0.0
+        return float(x)
+    except:
+        return 0.0
+
+
+# -----------------------------
+# 🔥 SAFE DATA LOADER
 # -----------------------------
 def get_df(request: Request):
     # 1. Try memory first
@@ -30,7 +44,7 @@ def get_df(request: Request):
 def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
     try:
         # -----------------------------
-        # LOAD DATASET (FIXED 🔥)
+        # LOAD DATASET
         # -----------------------------
         df = get_df(request)
 
@@ -43,7 +57,7 @@ def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
         # -----------------------------
         # CLEAN COLUMN NAMES
         # -----------------------------
-        df.columns = [col.strip() for col in df.columns]
+        df.columns = [str(col).strip() for col in df.columns]
 
         # -----------------------------
         # LIMIT CONTROL
@@ -55,13 +69,13 @@ def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
             limit = DEFAULT_PREVIEW_ROWS
 
         # -----------------------------
-        # AUTO DETECT TYPES
+        # AUTO DETECT TYPES (FIXED)
         # -----------------------------
-        numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns.tolist()
-        categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
+        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+        categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
 
         # -----------------------------
-        # SUMMARY STATS
+        # SUMMARY STATS (SAFE)
         # -----------------------------
         summary = {}
 
@@ -70,10 +84,10 @@ def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
 
             for col in numeric_cols:
                 summary[col] = {
-                    "mean": float(desc[col]["mean"]),
-                    "min": float(desc[col]["min"]),
-                    "max": float(desc[col]["max"]),
-                    "std": float(desc[col]["std"]),
+                    "mean": safe_float(desc[col].get("mean")),
+                    "min": safe_float(desc[col].get("min")),
+                    "max": safe_float(desc[col].get("max")),
+                    "std": safe_float(desc[col].get("std")),
                 }
 
         # -----------------------------
@@ -82,30 +96,37 @@ def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
         category_analysis = {}
 
         for col in categorical_cols[:5]:
-            category_analysis[col] = (
-                df[col]
-                .value_counts()
-                .head(5)
-                .to_dict()
-            )
+            try:
+                category_analysis[col] = (
+                    df[col]
+                    .astype(str)
+                    .value_counts()
+                    .head(5)
+                    .to_dict()
+                )
+            except:
+                category_analysis[col] = {}
 
         # -----------------------------
-        # CORRELATION
+        # CORRELATION (SAFE)
         # -----------------------------
         correlation = {}
 
         if len(numeric_cols) >= 2:
-            corr_df = df[numeric_cols].corr()
+            try:
+                corr_df = df[numeric_cols].corr()
 
-            correlation = {
-                col: {k: float(v) for k, v in corr_df[col].items()}
-                for col in corr_df.columns
-            }
+                correlation = {
+                    col: {k: safe_float(v) for k, v in corr_df[col].items()}
+                    for col in corr_df.columns
+                }
+            except:
+                correlation = {}
 
         # -----------------------------
-        # PREVIEW DATA
+        # PREVIEW DATA (SAFE)
         # -----------------------------
-        preview_df = df.head(limit)
+        preview_df = df.head(limit).copy()
 
         preview = preview_df.where(pd.notnull(preview_df), None).to_dict(orient="records")
 
@@ -129,5 +150,5 @@ def visualize(request: Request, limit: int = Query(DEFAULT_PREVIEW_ROWS)):
         }
 
     except Exception as e:
-        print("🔥 VISUALIZE ERROR:", e)
-        raise HTTPException(status_code=500, detail="Visualization failed")
+        print("🔥 VISUALIZE ERROR:", str(e))  # 🔥 REAL DEBUG
+        raise HTTPException(status_code=500, detail=str(e))
