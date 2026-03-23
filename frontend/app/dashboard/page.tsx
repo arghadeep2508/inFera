@@ -21,16 +21,9 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const [columns, setColumns] = useState<string[]>([]);
-  const [target, setTarget] = useState<string>("");
-
-  const [inputData, setInputData] = useState<Record<string, string>>({});
-
-  const [prediction, setPrediction] = useState<any>(null);
   const [forecast, setForecast] = useState<any>(null);
 
   const [aiInsights, setAIInsights] = useState<string>("");
-  const [aiLoading, setAILoading] = useState(true);
 
   const [previewLimit, setPreviewLimit] = useState(20);
 
@@ -39,10 +32,11 @@ export default function Dashboard() {
     { role: string; text: string }[]
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // -----------------------------
-  // FETCH
+  // FETCH DATA
   // -----------------------------
   const fetchAll = async () => {
     try {
@@ -52,21 +46,6 @@ export default function Dashboard() {
       const visData = await vis.json();
       setData(visData);
 
-      const col = await fetch(`${API}/columns/`);
-      const colData = await col.json();
-
-      if (colData.status === "success") {
-        setColumns(colData.columns);
-        setTarget(colData.target);
-
-        const obj: Record<string, string> = {};
-        colData.columns.forEach((c: string) => {
-          if (c !== colData.target) obj[c] = "";
-        });
-
-        setInputData(obj);
-      }
-
       const ai = await fetch(`${API}/ai-insights/`);
       const aiData = await ai.json();
       setAIInsights(aiData.insights || "No insights available");
@@ -75,7 +54,6 @@ export default function Dashboard() {
       setAIInsights("❌ Failed to load AI insights");
     } finally {
       setLoading(false);
-      setAILoading(false);
     }
   };
 
@@ -102,7 +80,9 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API}/chat/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ question: userMessage }),
       });
 
@@ -123,11 +103,45 @@ export default function Dashboard() {
   };
 
   // -----------------------------
-  // DATA
+  // FORECAST
+  // -----------------------------
+  const handleForecast = async () => {
+    try {
+      const res = await fetch(`${API}/forecast/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          years_ahead: 5,
+        }),
+      });
+
+      const json = await res.json();
+      setForecast(json.forecast);
+    } catch {
+      alert("Forecast failed");
+    }
+  };
+
+  // -----------------------------
+  // DATA SAFE
   // -----------------------------
   const rows = data?.rows ?? 0;
   const cols = data?.columns ?? 0;
   const numeric = data?.numeric_columns ?? [];
+
+  const summaryChartData = numeric.map((col: string) => ({
+    name: col,
+    value: data?.summary?.[col]?.mean || 0,
+  }));
+
+  const forecastChart =
+    forecast &&
+    Object.entries(forecast).map(([year, value]) => ({
+      year,
+      value: Number(value),
+    }));
 
   // -----------------------------
   // LOADING
@@ -163,8 +177,7 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto p-8 space-y-10 text-white">
 
-        {/* HEADER */}
-        <h1 className="text-4xl font-semibold tracking-tight">
+        <h1 className="text-4xl font-semibold">
           📊 Data Dashboard
         </h1>
 
@@ -189,7 +202,7 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className="overflow-x-auto border border-gray-800 rounded-xl">
+          <div className="overflow-x-auto border rounded-xl">
             <table className="w-full text-sm">
               <thead className="bg-gray-900">
                 <tr>
@@ -219,24 +232,71 @@ export default function Dashboard() {
 
         {/* AI INSIGHTS */}
         <Section title="🤖 AI Insights">
-          <div className="bg-gradient-to-br from-green-900/30 to-black p-5 rounded-xl border">
-            <p className="whitespace-pre-wrap text-green-300 text-sm leading-relaxed">
+          <div className="bg-green-900/20 border p-4 rounded-xl">
+            <p className="whitespace-pre-wrap text-green-300 text-sm">
               {aiInsights}
             </p>
           </div>
+        </Section>
+
+        {/* SUMMARY CHART */}
+        <Section title="📊 Data Overview">
+          <div className="bg-black/40 border rounded-xl p-4 h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={summaryChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#aaa" />
+                <YAxis stroke="#aaa" />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#22c55e"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+
+        {/* FORECAST */}
+        <Section title="📈 Forecast">
+          <button
+            onClick={handleForecast}
+            className="mb-3 bg-blue-600 px-4 py-2 rounded"
+          >
+            Generate Forecast
+          </button>
+
+          {forecastChart && (
+            <div className="bg-black/40 border rounded-xl p-4 h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={forecastChart}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis dataKey="year" stroke="#aaa" />
+                  <YAxis stroke="#aaa" />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#3b82f6"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Section>
 
         {/* CHAT */}
         <Section title="💬 Chat with your Data">
           <div className="bg-black/40 border rounded-xl p-4 h-[350px] flex flex-col">
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div className="flex-1 overflow-y-auto space-y-3">
               {chatHistory.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-3 rounded-xl max-w-[80%] text-sm ${
+                  className={`p-3 rounded-xl max-w-[80%] ${
                     msg.role === "user"
-                      ? "ml-auto bg-blue-600 text-white"
+                      ? "ml-auto bg-blue-600"
                       : "bg-gray-800 text-green-300"
                   }`}
                 >
@@ -244,10 +304,7 @@ export default function Dashboard() {
                 </div>
               ))}
 
-              {chatLoading && (
-                <p className="text-gray-400 text-sm">AI is thinking...</p>
-              )}
-
+              {chatLoading && <p>Thinking...</p>}
               <div ref={chatEndRef} />
             </div>
 
@@ -255,44 +312,35 @@ export default function Dashboard() {
               <input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleChat()}
-                className="flex-1 bg-black border px-3 py-2 rounded text-sm"
-                placeholder="Ask about trends, patterns..."
+                className="flex-1 bg-black border px-3 py-2 rounded"
+                placeholder="Ask something..."
               />
               <button
                 onClick={handleChat}
-                className="bg-green-600 px-4 rounded hover:bg-green-700"
+                className="bg-green-600 px-4 rounded"
               >
                 Send
               </button>
             </div>
           </div>
         </Section>
+
       </div>
     </>
   );
 }
 
-// -----------------------------
 // UI COMPONENTS
-// -----------------------------
-
-function Stat({ title, value }: { title: string; value: number }) {
+function Stat({ title, value }: any) {
   return (
-    <div className="p-6 bg-black/40 border border-gray-800 rounded-xl">
-      <p className="text-gray-400 text-sm">{title}</p>
+    <div className="p-6 bg-black/40 border rounded-xl">
+      <p className="text-gray-400">{title}</p>
       <p className="text-2xl font-bold">{value}</p>
     </div>
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: any) {
   return (
     <div className="space-y-3">
       <h2 className="text-xl font-semibold">{title}</h2>
