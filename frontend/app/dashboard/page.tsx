@@ -173,7 +173,7 @@ export default function Dashboard() {
     <>
       <Navbar />
 
-      <div className="max-w-7xl mx-auto p-8 space-y-10 text-white">
+      <div className="max-w-7xl mx-auto p-8 space-y-12 text-white">
 
         <h1 className="text-4xl font-bold">📊 Data Dashboard</h1>
 
@@ -190,7 +190,7 @@ export default function Dashboard() {
             <select
               value={previewLimit}
               onChange={(e) => setPreviewLimit(Number(e.target.value))}
-              className="bg-black border px-3 py-1"
+              className="bg-black border px-3 py-1 rounded"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -223,21 +223,23 @@ export default function Dashboard() {
 
         {/* AI */}
         <Section title="🤖 AI Insights">
-          <pre className="text-green-400 whitespace-pre-wrap">
-            {aiInsights}
-          </pre>
+          <div className="bg-green-900/20 border p-4 rounded-xl">
+            <pre className="text-green-400 whitespace-pre-wrap text-sm">
+              {aiInsights}
+            </pre>
+          </div>
         </Section>
 
         {/* CHART */}
         <Section title="📊 Data Overview">
-          <div className="h-[300px]">
+          <div className="h-[300px] bg-black/40 border rounded-xl p-3">
             <ResponsiveContainer>
               <LineChart data={summaryChartData}>
                 <CartesianGrid stroke="#333" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line dataKey="value" stroke="#22c55e" />
+                <Line dataKey="value" stroke="#22c55e" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -250,7 +252,7 @@ export default function Dashboard() {
               <input
                 key={c}
                 placeholder={c}
-                className="bg-black border p-2"
+                className="bg-black border p-2 rounded"
                 value={inputData[c]}
                 onChange={(e) =>
                   setInputData({ ...inputData, [c]: e.target.value })
@@ -261,15 +263,18 @@ export default function Dashboard() {
 
           <button
             onClick={handlePredict}
-            className="mt-3 bg-green-600 px-4 py-2"
+            className="mt-3 bg-green-600 px-4 py-2 rounded"
           >
             Predict
           </button>
 
           {prediction && (
-            <p className="mt-2 text-green-400">
-              Result: {JSON.stringify(prediction)}
-            </p>
+            <div className="mt-3 p-3 bg-green-900/30 border rounded">
+              <p className="font-semibold">Prediction Result:</p>
+              <p className="text-green-400 text-xl">
+                {prediction.prediction?.toFixed(2)}
+              </p>
+            </div>
           )}
         </Section>
 
@@ -277,20 +282,20 @@ export default function Dashboard() {
         <Section title="📈 Forecast">
           <button
             onClick={handleForecast}
-            className="bg-blue-600 px-4 py-2"
+            className="bg-blue-600 px-4 py-2 rounded"
           >
             Generate Forecast
           </button>
 
           {forecastChart && (
-            <div className="h-[300px] mt-3">
+            <div className="h-[300px] mt-3 bg-black/40 border rounded-xl p-3">
               <ResponsiveContainer>
                 <LineChart data={forecastChart}>
                   <CartesianGrid stroke="#333" />
                   <XAxis dataKey="year" />
                   <YAxis />
                   <Tooltip />
-                  <Line dataKey="value" stroke="#3b82f6" />
+                  <Line dataKey="value" stroke="#3b82f6" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -298,23 +303,40 @@ export default function Dashboard() {
         </Section>
 
         {/* CHAT */}
-        <Section title="💬 Chat">
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {chatHistory.map((m, i) => (
-              <div key={i}>{m.text}</div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
+        <Section title="💬 Chat with your Data">
+          <div className="bg-black/40 border rounded-xl p-4 flex flex-col h-[350px]">
 
-          <div className="flex mt-2">
-            <input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              className="flex-1 bg-black border p-2"
-            />
-            <button onClick={handleChat} className="bg-green-600 px-4">
-              Send
-            </button>
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {chatHistory.map((m, i) => (
+                <div
+                  key={i}
+                  className={`p-2 rounded max-w-[70%] ${
+                    m.role === "user"
+                      ? "bg-blue-600 ml-auto"
+                      : "bg-gray-800 text-green-300"
+                  }`}
+                >
+                  {m.text}
+                </div>
+              ))}
+              {chatLoading && <p>Thinking...</p>}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="flex mt-3 gap-2">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 bg-black border p-2 rounded"
+                placeholder="Ask about your data..."
+              />
+              <button
+                onClick={handleChat}
+                className="bg-green-600 px-4 rounded"
+              >
+                Send
+              </button>
+            </div>
           </div>
         </Section>
 
@@ -326,17 +348,17 @@ export default function Dashboard() {
 // UI
 function Stat({ title, value }: any) {
   return (
-    <div className="p-5 border rounded-xl">
-      <p>{title}</p>
-      <h2>{value}</h2>
+    <div className="p-5 border rounded-xl bg-black/40">
+      <p className="text-gray-400">{title}</p>
+      <h2 className="text-2xl font-bold">{value}</h2>
     </div>
   );
 }
 
 function Section({ title, children }: any) {
   return (
-    <div>
-      <h2 className="text-xl mb-2">{title}</h2>
+    <div className="space-y-3">
+      <h2 className="text-xl font-semibold">{title}</h2>
       {children}
     </div>
   );
