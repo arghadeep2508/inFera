@@ -13,31 +13,31 @@ import {
 } from "recharts";
 
 export default function Dashboard() {
-  const API =
-    process.env.NEXT_PUBLIC_API_URL
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-      : "";
+  const API = process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+    : "";
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const [forecast, setForecast] = useState<any>(null);
+  const [prediction, setPrediction] = useState<any>(null);
 
-  const [aiInsights, setAIInsights] = useState<string>("");
+  const [columns, setColumns] = useState<string[]>([]);
+  const [target, setTarget] = useState<string>("");
+  const [inputData, setInputData] = useState<Record<string, string>>({});
+
+  const [aiInsights, setAIInsights] = useState("");
 
   const [previewLimit, setPreviewLimit] = useState(20);
 
   const [chatInput, setChatInput] = useState("");
-  const [chatHistory, setChatHistory] = useState<
-    { role: string; text: string }[]
-  >([]);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // -----------------------------
-  // FETCH DATA
-  // -----------------------------
+  // ---------------- FETCH ----------------
   const fetchAll = async () => {
     try {
       setLoading(true);
@@ -46,12 +46,25 @@ export default function Dashboard() {
       const visData = await vis.json();
       setData(visData);
 
+      const col = await fetch(`${API}/columns/`);
+      const colData = await col.json();
+
+      if (colData.status === "success") {
+        setColumns(colData.columns);
+        setTarget(colData.target);
+
+        const obj: Record<string, string> = {};
+        colData.columns.forEach((c: string) => {
+          if (c !== colData.target) obj[c] = "";
+        });
+        setInputData(obj);
+      }
+
       const ai = await fetch(`${API}/ai-insights/`);
       const aiData = await ai.json();
-      setAIInsights(aiData.insights || "No insights available");
-    } catch (err) {
-      console.error(err);
-      setAIInsights("❌ Failed to load AI insights");
+      setAIInsights(aiData.insights || "No insights");
+    } catch {
+      setAIInsights("❌ Failed to load insights");
     } finally {
       setLoading(false);
     }
@@ -65,56 +78,29 @@ export default function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // -----------------------------
-  // CHAT
-  // -----------------------------
-  const handleChat = async () => {
-    if (!chatInput.trim()) return;
-
-    const userMessage = chatInput;
-
-    setChatHistory((prev) => [...prev, { role: "user", text: userMessage }]);
-    setChatInput("");
-    setChatLoading(true);
-
+  // ---------------- PREDICT ----------------
+  const handlePredict = async () => {
     try {
-      const res = await fetch(`${API}/chat/`, {
+      const res = await fetch(`${API}/predict/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ question: userMessage }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: inputData }),
       });
 
       const json = await res.json();
-
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "ai", text: json.answer },
-      ]);
+      setPrediction(json);
     } catch {
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "ai", text: "❌ Error getting response" },
-      ]);
-    } finally {
-      setChatLoading(false);
+      alert("Prediction failed");
     }
   };
 
-  // -----------------------------
-  // FORECAST
-  // -----------------------------
+  // ---------------- FORECAST ----------------
   const handleForecast = async () => {
     try {
       const res = await fetch(`${API}/forecast/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          years_ahead: 5,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: inputData, years_ahead: 5 }),
       });
 
       const json = await res.json();
@@ -124,62 +110,72 @@ export default function Dashboard() {
     }
   };
 
-  // -----------------------------
-  // DATA SAFE
-  // -----------------------------
+  // ---------------- CHAT ----------------
+  const handleChat = async () => {
+    if (!chatInput.trim()) return;
+
+    const userMsg = chatInput;
+    setChatHistory((p) => [...p, { role: "user", text: userMsg }]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const res = await fetch(`${API}/chat/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg }),
+      });
+
+      const json = await res.json();
+
+      setChatHistory((p) => [
+        ...p,
+        { role: "ai", text: json.answer },
+      ]);
+    } catch {
+      setChatHistory((p) => [
+        ...p,
+        { role: "ai", text: "❌ Error" },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  // ---------------- DATA ----------------
   const rows = data?.rows ?? 0;
   const cols = data?.columns ?? 0;
   const numeric = data?.numeric_columns ?? [];
 
-  const summaryChartData = numeric.map((col: string) => ({
-    name: col,
-    value: data?.summary?.[col]?.mean || 0,
+  const summaryChartData = numeric.map((c: string) => ({
+    name: c,
+    value: data?.summary?.[c]?.mean || 0,
   }));
 
   const forecastChart =
     forecast &&
-    Object.entries(forecast).map(([year, value]) => ({
+    Object.entries(forecast).map(([year, val]) => ({
       year,
-      value: Number(value),
+      value: Number(val),
     }));
 
-  // -----------------------------
-  // LOADING
-  // -----------------------------
-  if (loading) {
+  // ---------------- LOADING ----------------
+  if (loading)
     return (
       <>
         <Navbar />
-        <div className="p-10 text-center text-white">
-          ⏳ Loading dashboard...
-        </div>
+        <div className="p-10 text-white text-center">Loading...</div>
       </>
     );
-  }
 
-  if (!data) {
-    return (
-      <>
-        <Navbar />
-        <div className="p-10 text-center text-white">
-          ❌ No data found
-        </div>
-      </>
-    );
-  }
-
-  // -----------------------------
-  // UI
-  // -----------------------------
+  // ---------------- UI ----------------
   return (
     <>
       <Navbar />
 
       <div className="max-w-7xl mx-auto p-8 space-y-10 text-white">
 
-        <h1 className="text-4xl font-semibold">
-          📊 Data Dashboard
-        </h1>
+        <h1 className="text-4xl font-bold">📊 Data Dashboard</h1>
 
         {/* STATS */}
         <div className="grid md:grid-cols-3 gap-6">
@@ -188,17 +184,17 @@ export default function Dashboard() {
           <Stat title="Numeric Columns" value={numeric.length} />
         </div>
 
-        {/* PREVIEW */}
+        {/* TABLE */}
         <Section title="📄 Dataset Preview">
-          <div className="flex justify-end mb-3">
+          <div className="flex justify-end mb-2">
             <select
               value={previewLimit}
               onChange={(e) => setPreviewLimit(Number(e.target.value))}
-              className="bg-gray-900 border px-3 py-1 rounded"
+              className="bg-black border px-3 py-1"
             >
-              <option value={10}>10 rows</option>
-              <option value={20}>20 rows</option>
-              <option value={50}>50 rows</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
             </select>
           </div>
 
@@ -207,21 +203,16 @@ export default function Dashboard() {
               <thead className="bg-gray-900">
                 <tr>
                   {data?.preview?.[0] &&
-                    Object.keys(data.preview[0]).map((col: string) => (
-                      <th key={col} className="p-3 text-left">
-                        {col}
-                      </th>
+                    Object.keys(data.preview[0]).map((c: string) => (
+                      <th key={c} className="p-2">{c}</th>
                     ))}
                 </tr>
               </thead>
-
               <tbody>
-                {data?.preview?.map((row: any, idx: number) => (
-                  <tr key={idx} className="border-t border-gray-800">
-                    {Object.values(row).map((val: any, i: number) => (
-                      <td key={i} className="p-3">
-                        {String(val)}
-                      </td>
+                {data?.preview?.map((row: any, i: number) => (
+                  <tr key={i}>
+                    {Object.values(row).map((v: any, j: number) => (
+                      <td key={j} className="p-2">{String(v)}</td>
                     ))}
                   </tr>
                 ))}
@@ -230,56 +221,76 @@ export default function Dashboard() {
           </div>
         </Section>
 
-        {/* AI INSIGHTS */}
+        {/* AI */}
         <Section title="🤖 AI Insights">
-          <div className="bg-green-900/20 border p-4 rounded-xl">
-            <p className="whitespace-pre-wrap text-green-300 text-sm">
-              {aiInsights}
-            </p>
-          </div>
+          <pre className="text-green-400 whitespace-pre-wrap">
+            {aiInsights}
+          </pre>
         </Section>
 
-        {/* SUMMARY CHART */}
+        {/* CHART */}
         <Section title="📊 Data Overview">
-          <div className="bg-black/40 border rounded-xl p-4 h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[300px]">
+            <ResponsiveContainer>
               <LineChart data={summaryChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#aaa" />
-                <YAxis stroke="#aaa" />
+                <CartesianGrid stroke="#333" />
+                <XAxis dataKey="name" />
+                <YAxis />
                 <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#22c55e"
-                />
+                <Line dataKey="value" stroke="#22c55e" />
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </Section>
+
+        {/* PREDICT */}
+        <Section title="🎯 Prediction">
+          <div className="grid md:grid-cols-3 gap-3">
+            {Object.keys(inputData).map((c) => (
+              <input
+                key={c}
+                placeholder={c}
+                className="bg-black border p-2"
+                value={inputData[c]}
+                onChange={(e) =>
+                  setInputData({ ...inputData, [c]: e.target.value })
+                }
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={handlePredict}
+            className="mt-3 bg-green-600 px-4 py-2"
+          >
+            Predict
+          </button>
+
+          {prediction && (
+            <p className="mt-2 text-green-400">
+              Result: {JSON.stringify(prediction)}
+            </p>
+          )}
         </Section>
 
         {/* FORECAST */}
         <Section title="📈 Forecast">
           <button
             onClick={handleForecast}
-            className="mb-3 bg-blue-600 px-4 py-2 rounded"
+            className="bg-blue-600 px-4 py-2"
           >
             Generate Forecast
           </button>
 
           {forecastChart && (
-            <div className="bg-black/40 border rounded-xl p-4 h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] mt-3">
+              <ResponsiveContainer>
                 <LineChart data={forecastChart}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="year" stroke="#aaa" />
-                  <YAxis stroke="#aaa" />
+                  <CartesianGrid stroke="#333" />
+                  <XAxis dataKey="year" />
+                  <YAxis />
                   <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#3b82f6"
-                  />
+                  <Line dataKey="value" stroke="#3b82f6" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -287,41 +298,23 @@ export default function Dashboard() {
         </Section>
 
         {/* CHAT */}
-        <Section title="💬 Chat with your Data">
-          <div className="bg-black/40 border rounded-xl p-4 h-[350px] flex flex-col">
+        <Section title="💬 Chat">
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {chatHistory.map((m, i) => (
+              <div key={i}>{m.text}</div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3">
-              {chatHistory.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`p-3 rounded-xl max-w-[80%] ${
-                    msg.role === "user"
-                      ? "ml-auto bg-blue-600"
-                      : "bg-gray-800 text-green-300"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              ))}
-
-              {chatLoading && <p>Thinking...</p>}
-              <div ref={chatEndRef} />
-            </div>
-
-            <div className="flex gap-2 mt-3">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 bg-black border px-3 py-2 rounded"
-                placeholder="Ask something..."
-              />
-              <button
-                onClick={handleChat}
-                className="bg-green-600 px-4 rounded"
-              >
-                Send
-              </button>
-            </div>
+          <div className="flex mt-2">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              className="flex-1 bg-black border p-2"
+            />
+            <button onClick={handleChat} className="bg-green-600 px-4">
+              Send
+            </button>
           </div>
         </Section>
 
@@ -330,20 +323,20 @@ export default function Dashboard() {
   );
 }
 
-// UI COMPONENTS
+// UI
 function Stat({ title, value }: any) {
   return (
-    <div className="p-6 bg-black/40 border rounded-xl">
-      <p className="text-gray-400">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
+    <div className="p-5 border rounded-xl">
+      <p>{title}</p>
+      <h2>{value}</h2>
     </div>
   );
 }
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-3">
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <div>
+      <h2 className="text-xl mb-2">{title}</h2>
       {children}
     </div>
   );
