@@ -88,12 +88,11 @@ export default function Dashboard() {
       });
 
       const json = await res.json();
-
       if (!res.ok) throw new Error(json.detail || "Prediction failed");
 
       setPrediction(json);
     } catch (e: any) {
-      alert(e.message || "Prediction failed");
+      alert(e.message);
     }
   };
 
@@ -106,19 +105,18 @@ export default function Dashboard() {
         body: JSON.stringify({
           data: {
             ...inputData,
-            Year: Number(inputData["Year"]) || 2020, // 🔥 ensure required
+            Year: Number(inputData["Year"]) || 2020,
           },
           years_ahead: 5,
         }),
       });
 
       const json = await res.json();
-
       if (!res.ok) throw new Error(json.detail || "Forecast failed");
 
       setForecast(json.forecast);
     } catch (e: any) {
-      alert(e.message || "Forecast failed");
+      alert(e.message);
     }
   };
 
@@ -199,14 +197,73 @@ export default function Dashboard() {
             <Stat title="Numeric Columns" value={numeric.length} />
           </div>
 
-          {/* PREDICTION */}
+          {/* DATASET PREVIEW */}
+          <Section title="📄 Dataset Preview">
+            <div className="flex justify-end mb-2">
+              <select
+                value={previewLimit}
+                onChange={(e) => setPreviewLimit(Number(e.target.value))}
+                className="bg-black border px-3 py-1 rounded"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            <div className="overflow-x-auto border rounded-xl">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-900">
+                  <tr>
+                    {data?.preview?.[0] &&
+                      Object.keys(data.preview[0]).map((c: string) => (
+                        <th key={c} className="p-2">{c}</th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.preview?.map((row: any, i: number) => (
+                    <tr key={i}>
+                      {Object.values(row).map((v: any, j: number) => (
+                        <td key={j} className="p-2">{String(v)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* AI */}
+          <Section title="🤖 AI Insights">
+            <pre className="text-green-400 whitespace-pre-wrap text-sm">
+              {aiInsights}
+            </pre>
+          </Section>
+
+          {/* CHART */}
+          <Section title="📊 Data Overview">
+            <div className="h-[300px] bg-black/40 border rounded-xl p-3">
+              <ResponsiveContainer>
+                <LineChart data={summaryChartData}>
+                  <CartesianGrid stroke="#333" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line dataKey="value" stroke="#22c55e" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Section>
+
+          {/* PREDICT */}
           <Section title="🎯 Prediction">
             <div className="grid md:grid-cols-3 gap-3">
               {Object.keys(inputData).map((c) => (
                 <input
                   key={c}
                   placeholder={c}
-                  className="bg-black/50 border border-white/10 p-2 rounded-xl"
+                  className="bg-black border p-2 rounded"
                   value={inputData[c]}
                   onChange={(e) =>
                     setInputData({ ...inputData, [c]: e.target.value })
@@ -215,38 +272,25 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <button
-              onClick={handlePredict}
-              className="mt-3 bg-green-600 px-5 py-2 rounded-xl"
-            >
+            <button onClick={handlePredict} className="mt-3 bg-green-600 px-4 py-2 rounded">
               Predict
             </button>
 
             {prediction && (
-              <div className="mt-3 p-3 bg-green-900/30 border rounded-xl">
+              <div className="mt-3 p-3 bg-green-900/30 border rounded">
                 <p className="font-semibold">Prediction Result:</p>
-
                 <p className="text-green-400 text-xl">
                   {typeof prediction.prediction === "number"
                     ? prediction.prediction.toFixed(2)
                     : String(prediction.prediction)}
                 </p>
-
-                {prediction.type && (
-                  <p className="text-xs text-gray-400">
-                    Type: {prediction.type}
-                  </p>
-                )}
               </div>
             )}
           </Section>
 
           {/* FORECAST */}
           <Section title="📈 Forecast">
-            <button
-              onClick={handleForecast}
-              className="bg-blue-600 px-5 py-2 rounded-xl"
-            >
+            <button onClick={handleForecast} className="bg-blue-600 px-4 py-2 rounded">
               Generate Forecast
             </button>
 
@@ -254,15 +298,42 @@ export default function Dashboard() {
               <div className="h-[300px] mt-3 bg-black/40 border rounded-xl p-3">
                 <ResponsiveContainer>
                   <LineChart data={forecastChart}>
-                    <CartesianGrid stroke="#444" />
+                    <CartesianGrid stroke="#333" />
                     <XAxis dataKey="year" />
                     <YAxis />
                     <Tooltip />
-                    <Line dataKey="value" stroke="#3b82f6" strokeWidth={3} />
+                    <Line dataKey="value" stroke="#3b82f6" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             )}
+          </Section>
+
+          {/* CHAT */}
+          <Section title="💬 Chat with your Data">
+            <div className="bg-black/40 border rounded-xl p-4 flex flex-col h-[350px]">
+              <div className="flex-1 overflow-y-auto space-y-3">
+                {chatHistory.map((m, i) => (
+                  <div key={i} className={`p-2 rounded max-w-[70%] ${m.role === "user" ? "bg-blue-600 ml-auto" : "bg-gray-800 text-green-300"}`}>
+                    {m.text}
+                  </div>
+                ))}
+                {chatLoading && <p>Thinking...</p>}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="flex mt-3 gap-2">
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  className="flex-1 bg-black border p-2 rounded"
+                  placeholder="Ask about your data..."
+                />
+                <button onClick={handleChat} className="bg-green-600 px-4 rounded">
+                  Send
+                </button>
+              </div>
+            </div>
           </Section>
 
         </div>
@@ -271,19 +342,18 @@ export default function Dashboard() {
   );
 }
 
-// UI
 function Stat({ title, value }: any) {
   return (
-    <div className="p-6 rounded-2xl bg-black/40 border border-white/10">
+    <div className="p-5 border rounded-xl bg-black/40">
       <p className="text-gray-400">{title}</p>
-      <h2 className="text-3xl font-bold text-green-400">{value}</h2>
+      <h2 className="text-2xl font-bold">{value}</h2>
     </div>
   );
 }
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-4 p-5 rounded-2xl bg-white/5 border border-white/10">
+    <div className="space-y-3">
       <h2 className="text-xl font-semibold">{title}</h2>
       {children}
     </div>
