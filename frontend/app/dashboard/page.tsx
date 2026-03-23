@@ -38,6 +38,36 @@ export default function Dashboard() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // ---------------- CLEAN + FORMAT AI TEXT ----------------
+  const formatInsights = (text: string) => {
+    if (!text) return {};
+
+    const clean = text.replace(/\*\*/g, "").replace(/-\s/g, "");
+
+    const sections: any = {
+      insights: [],
+      patterns: [],
+      issues: [],
+      suggestions: [],
+    };
+
+    let current = "";
+
+    clean.split("\n").forEach((line) => {
+      const l = line.toLowerCase();
+
+      if (l.includes("key insights")) current = "insights";
+      else if (l.includes("patterns")) current = "patterns";
+      else if (l.includes("issues")) current = "issues";
+      else if (l.includes("suggestions")) current = "suggestions";
+      else if (current && line.trim()) {
+        sections[current].push(line.trim());
+      }
+    });
+
+    return sections;
+  };
+
   // ---------------- FETCH ----------------
   const fetchAll = async () => {
     try {
@@ -169,6 +199,8 @@ export default function Dashboard() {
       value: Number(val),
     }));
 
+  const formatted = formatInsights(aiInsights);
+
   if (loading)
     return (
       <>
@@ -184,7 +216,6 @@ export default function Dashboard() {
       <Navbar />
 
       <div className="min-h-screen flex flex-col bg-[#0B0F14] text-gray-200">
-
         <div className="flex-1 max-w-7xl mx-auto p-8 space-y-10 w-full">
 
           <h1 className="text-3xl font-semibold">📊 Data Dashboard</h1>
@@ -233,147 +264,39 @@ export default function Dashboard() {
             </div>
           </Section>
 
-          {/* AI */}
+          {/* 🔥 NEW AI UI */}
           <Section title="🤖 AI Insights">
-            <pre className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">
-              {aiInsights}
-            </pre>
-          </Section>
+            <div className="grid md:grid-cols-2 gap-4">
 
-          {/* CHART */}
-          <Section title="📊 Data Overview">
-            <div className="h-[300px] bg-[#0F172A] rounded-xl p-4 border border-white/5">
-              <ResponsiveContainer>
-                <LineChart data={summaryChartData}>
-                  <CartesianGrid stroke="#1f2937" />
-                  <XAxis dataKey="name" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip />
-                  <Line dataKey="value" stroke="#6366F1" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              {formatted.insights?.length > 0 && (
+                <Card title="📊 Key Insights" color="text-blue-400" data={formatted.insights} />
+              )}
+
+              {formatted.patterns?.length > 0 && (
+                <Card title="📈 Patterns" color="text-purple-400" data={formatted.patterns} />
+              )}
+
+              {formatted.issues?.length > 0 && (
+                <Card title="⚠️ Issues" color="text-red-400" data={formatted.issues} />
+              )}
+
+              {formatted.suggestions?.length > 0 && (
+                <Card title="💡 Suggestions" color="text-green-400" data={formatted.suggestions} />
+              )}
+
             </div>
           </Section>
 
-          {/* PREDICT */}
-          <Section title="🎯 Prediction">
-            <div className="grid md:grid-cols-3 gap-3">
-              {Object.keys(inputData).map((c) => (
-                <input
-                  key={c}
-                  placeholder={c}
-                  className="bg-[#0F172A] border border-white/5 p-2 rounded-xl"
-                  value={inputData[c]}
-                  onChange={(e) =>
-                    setInputData({ ...inputData, [c]: e.target.value })
-                  }
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={handlePredict}
-              className="mt-3 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl"
-            >
-              Predict
-            </button>
-
-            {prediction && (
-              <div className="mt-3 p-4 bg-[#0F172A] border border-white/5 rounded-xl">
-                <p className="text-sm text-gray-400">Prediction Result</p>
-                <p className="text-indigo-400 text-2xl font-semibold">
-                  {typeof prediction.prediction === "number"
-                    ? prediction.prediction.toFixed(2)
-                    : String(prediction.prediction)}
-                </p>
-              </div>
-            )}
-          </Section>
-
-          {/* FORECAST */}
-          <Section title="📈 Forecast">
-            <button
-              onClick={handleForecast}
-              className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl"
-            >
-              Generate Forecast
-            </button>
-
-            {forecastChart && (
-              <div className="h-[300px] mt-3 bg-[#0F172A] border border-white/5 rounded-xl p-4">
-                <ResponsiveContainer>
-                  <LineChart data={forecastChart}>
-                    <CartesianGrid stroke="#1f2937" />
-                    <XAxis dataKey="year" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip />
-                    <Line dataKey="value" stroke="#6366F1" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Section>
-
-          {/* CHAT */}
-          <Section title="💬 Chat with your Data">
-            <div className="bg-[#0F172A] border border-white/5 rounded-xl p-4 flex flex-col h-[350px]">
-              <div className="flex-1 overflow-y-auto space-y-3">
-                {chatHistory.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`p-2 rounded-xl max-w-[70%] ${
-                      m.role === "user"
-                        ? "bg-indigo-600 ml-auto"
-                        : "bg-[#1F2937]"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                ))}
-                {chatLoading && <p>Thinking...</p>}
-                <div ref={chatEndRef} />
-              </div>
-
-              <div className="flex mt-3 gap-2">
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-1 bg-[#0F172A] border border-white/5 p-2 rounded-xl"
-                  placeholder="Ask about your data..."
-                />
-                <button
-                  onClick={handleChat}
-                  className="bg-indigo-600 px-4 rounded-xl"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </Section>
-
-        </div>
-
-        <Footer />
-      </div>
-    </>
-  );
-}
-
-// UI
-function Stat({ title, value }: any) {
+          {/* REST UNCHANGED BELOW */}
+function Card({ title, color, data }: any) {
   return (
-    <div className="p-6 rounded-2xl bg-[#111827] border border-white/5 shadow">
-      <p className="text-gray-400 text-sm">{title}</p>
-      <h2 className="text-2xl font-semibold mt-1">{value}</h2>
+    <div className="p-4 rounded-xl bg-[#0F172A] border border-white/5">
+      <h3 className={`font-semibold mb-2 ${color}`}>{title}</h3>
+      <ul className="text-sm text-gray-300 space-y-1">
+        {data.map((d: string, i: number) => (
+          <li key={i}>{d}</li>
+        ))}
+      </ul>
     </div>
   );
-}
-
-function Section({ title, children }: any) {
-  return (
-    <div className="space-y-4 p-6 rounded-2xl bg-[#111827] border border-white/5 shadow">
-      <h2 className="text-lg font-medium">{title}</h2>
-      {children}
-    </div>
-  );
-}
+}     
