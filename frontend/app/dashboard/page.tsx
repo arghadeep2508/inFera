@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer"; // ✅ Added
+import Footer from "../components/Footer";
 import {
   LineChart,
   Line,
@@ -169,29 +169,25 @@ export default function Dashboard() {
       value: Number(val),
     }));
 
-  // ---------------- LOADING ----------------
   if (loading)
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center text-white">
+        <div className="min-h-screen flex items-center justify-center text-gray-300">
           Loading...
         </div>
       </>
     );
 
-  // ---------------- UI ----------------
   return (
     <>
       <Navbar />
 
-      {/* ✅ FIXED LAYOUT */}
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-black via-gray-900 to-black text-white">
+      <div className="min-h-screen flex flex-col bg-[#0B0F14] text-gray-200">
 
-        {/* ✅ CONTENT EXPANDS */}
         <div className="flex-1 max-w-7xl mx-auto p-8 space-y-10 w-full">
 
-          <h1 className="text-4xl font-bold">📊 Data Dashboard</h1>
+          <h1 className="text-3xl font-semibold">📊 Data Dashboard</h1>
 
           {/* STATS */}
           <div className="grid md:grid-cols-3 gap-6">
@@ -200,13 +196,13 @@ export default function Dashboard() {
             <Stat title="Numeric Columns" value={numeric.length} />
           </div>
 
-          {/* DATASET PREVIEW */}
+          {/* DATASET */}
           <Section title="📄 Dataset Preview">
             <div className="flex justify-end mb-2">
               <select
                 value={previewLimit}
                 onChange={(e) => setPreviewLimit(Number(e.target.value))}
-                className="bg-black border px-3 py-1 rounded"
+                className="bg-[#0F172A] border border-white/5 px-3 py-1 rounded"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -214,21 +210,21 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <div className="overflow-x-auto border rounded-xl">
+            <div className="overflow-x-auto rounded-xl border border-white/5">
               <table className="w-full text-sm">
-                <thead className="bg-gray-900">
+                <thead className="bg-[#0F172A]">
                   <tr>
                     {data?.preview?.[0] &&
                       Object.keys(data.preview[0]).map((c: string) => (
-                        <th key={c} className="p-2">{c}</th>
+                        <th key={c} className="p-2 text-gray-400">{c}</th>
                       ))}
                   </tr>
                 </thead>
                 <tbody>
                   {data?.preview?.map((row: any, i: number) => (
-                    <tr key={i}>
+                    <tr key={i} className="border-t border-white/5">
                       {Object.values(row).map((v: any, j: number) => (
-                        <td key={j} className="p-2">{String(v)}</td>
+                        <td key={j} className="p-2 text-gray-300">{String(v)}</td>
                       ))}
                     </tr>
                   ))}
@@ -239,21 +235,21 @@ export default function Dashboard() {
 
           {/* AI */}
           <Section title="🤖 AI Insights">
-            <pre className="text-green-400 whitespace-pre-wrap text-sm">
+            <pre className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">
               {aiInsights}
             </pre>
           </Section>
 
           {/* CHART */}
           <Section title="📊 Data Overview">
-            <div className="h-[300px] bg-black/40 border rounded-xl p-3">
+            <div className="h-[300px] bg-[#0F172A] rounded-xl p-4 border border-white/5">
               <ResponsiveContainer>
                 <LineChart data={summaryChartData}>
-                  <CartesianGrid stroke="#333" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <CartesianGrid stroke="#1f2937" />
+                  <XAxis dataKey="name" stroke="#9ca3af" />
+                  <YAxis stroke="#9ca3af" />
                   <Tooltip />
-                  <Line dataKey="value" stroke="#22c55e" strokeWidth={2} />
+                  <Line dataKey="value" stroke="#6366F1" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -266,7 +262,7 @@ export default function Dashboard() {
                 <input
                   key={c}
                   placeholder={c}
-                  className="bg-black border p-2 rounded"
+                  className="bg-[#0F172A] border border-white/5 p-2 rounded-xl"
                   value={inputData[c]}
                   onChange={(e) =>
                     setInputData({ ...inputData, [c]: e.target.value })
@@ -275,14 +271,17 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <button onClick={handlePredict} className="mt-3 bg-green-600 px-4 py-2 rounded">
+            <button
+              onClick={handlePredict}
+              className="mt-3 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl"
+            >
               Predict
             </button>
 
             {prediction && (
-              <div className="mt-3 p-3 bg-green-900/30 border rounded">
-                <p className="font-semibold">Prediction Result:</p>
-                <p className="text-green-400 text-xl">
+              <div className="mt-3 p-4 bg-[#0F172A] border border-white/5 rounded-xl">
+                <p className="text-sm text-gray-400">Prediction Result</p>
+                <p className="text-indigo-400 text-2xl font-semibold">
                   {typeof prediction.prediction === "number"
                     ? prediction.prediction.toFixed(2)
                     : String(prediction.prediction)}
@@ -293,19 +292,22 @@ export default function Dashboard() {
 
           {/* FORECAST */}
           <Section title="📈 Forecast">
-            <button onClick={handleForecast} className="bg-blue-600 px-4 py-2 rounded">
+            <button
+              onClick={handleForecast}
+              className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl"
+            >
               Generate Forecast
             </button>
 
             {forecastChart && (
-              <div className="h-[300px] mt-3 bg-black/40 border rounded-xl p-3">
+              <div className="h-[300px] mt-3 bg-[#0F172A] border border-white/5 rounded-xl p-4">
                 <ResponsiveContainer>
                   <LineChart data={forecastChart}>
-                    <CartesianGrid stroke="#333" />
-                    <XAxis dataKey="year" />
-                    <YAxis />
+                    <CartesianGrid stroke="#1f2937" />
+                    <XAxis dataKey="year" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
                     <Tooltip />
-                    <Line dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+                    <Line dataKey="value" stroke="#6366F1" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -314,10 +316,17 @@ export default function Dashboard() {
 
           {/* CHAT */}
           <Section title="💬 Chat with your Data">
-            <div className="bg-black/40 border rounded-xl p-4 flex flex-col h-[350px]">
+            <div className="bg-[#0F172A] border border-white/5 rounded-xl p-4 flex flex-col h-[350px]">
               <div className="flex-1 overflow-y-auto space-y-3">
                 {chatHistory.map((m, i) => (
-                  <div key={i} className={`p-2 rounded max-w-[70%] ${m.role === "user" ? "bg-blue-600 ml-auto" : "bg-gray-800 text-green-300"}`}>
+                  <div
+                    key={i}
+                    className={`p-2 rounded-xl max-w-[70%] ${
+                      m.role === "user"
+                        ? "bg-indigo-600 ml-auto"
+                        : "bg-[#1F2937]"
+                    }`}
+                  >
                     {m.text}
                   </div>
                 ))}
@@ -329,10 +338,13 @@ export default function Dashboard() {
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-1 bg-black border p-2 rounded"
+                  className="flex-1 bg-[#0F172A] border border-white/5 p-2 rounded-xl"
                   placeholder="Ask about your data..."
                 />
-                <button onClick={handleChat} className="bg-green-600 px-4 rounded">
+                <button
+                  onClick={handleChat}
+                  className="bg-indigo-600 px-4 rounded-xl"
+                >
                   Send
                 </button>
               </div>
@@ -341,9 +353,7 @@ export default function Dashboard() {
 
         </div>
 
-        {/* ✅ FOOTER FIXED */}
         <Footer />
-
       </div>
     </>
   );
@@ -352,17 +362,17 @@ export default function Dashboard() {
 // UI
 function Stat({ title, value }: any) {
   return (
-    <div className="p-5 border rounded-xl bg-black/40">
-      <p className="text-gray-400">{title}</p>
-      <h2 className="text-2xl font-bold">{value}</h2>
+    <div className="p-6 rounded-2xl bg-[#111827] border border-white/5 shadow">
+      <p className="text-gray-400 text-sm">{title}</p>
+      <h2 className="text-2xl font-semibold mt-1">{value}</h2>
     </div>
   );
 }
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-3">
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <div className="space-y-4 p-6 rounded-2xl bg-[#111827] border border-white/5 shadow">
+      <h2 className="text-lg font-medium">{title}</h2>
       {children}
     </div>
   );
