@@ -241,7 +241,7 @@ export default function Dashboard() {
               </div>
 
               <div className="text-green-300 text-sm space-y-2">
-                {aiInsights.split("\n").map((line, i) => (
+                {(aiInsights || "").split("\n").map((line, i) => (
                   <p key={i}>{line}</p>
                 ))}
               </div>
@@ -250,21 +250,14 @@ export default function Dashboard() {
 
           {/* CHART */}
           <Section title="📊 Data Overview">
-            <div className="h-[300px] bg-black/40 border border-white/10 rounded-xl p-3">
+            <div className="h-[300px] w-full min-w-0 bg-black/40 border border-white/10 rounded-xl p-3">
               <ResponsiveContainer>
                 <LineChart data={summaryChartData}>
                   <CartesianGrid stroke="#444" strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#111", border: "none" }}
-                  />
-                  <Line
-                    dataKey="value"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "#111", border: "none" }} />
+                  <Line dataKey="value" stroke="#22c55e" strokeWidth={3} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -297,7 +290,9 @@ export default function Dashboard() {
               <div className="mt-3 p-3 bg-green-900/30 border border-green-500/20 rounded-xl">
                 <p className="font-semibold">Prediction Result:</p>
                 <p className="text-green-400 text-xl">
-                  {prediction.prediction?.toFixed(2)}
+                  {typeof prediction?.prediction === "number"
+                    ? prediction.prediction.toFixed(2)
+                    : prediction?.prediction}
                 </p>
               </div>
             )}
@@ -313,21 +308,14 @@ export default function Dashboard() {
             </button>
 
             {forecastChart && (
-              <div className="h-[300px] mt-3 bg-black/40 border border-white/10 rounded-xl p-3">
+              <div className="h-[300px] w-full min-w-0 mt-3 bg-black/40 border border-white/10 rounded-xl p-3">
                 <ResponsiveContainer>
                   <LineChart data={forecastChart}>
                     <CartesianGrid stroke="#444" strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
                     <YAxis />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: "#111", border: "none" }}
-                    />
-                    <Line
-                      dataKey="value"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      dot={{ r: 4 }}
-                    />
+                    <Tooltip contentStyle={{ backgroundColor: "#111", border: "none" }} />
+                    <Line dataKey="value" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -338,6 +326,12 @@ export default function Dashboard() {
           <Section title="💬 Chat with your Data">
             <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col h-[350px]">
               <div className="flex-1 overflow-y-auto space-y-3">
+                {chatHistory.length === 0 && !chatLoading && (
+                  <p className="text-gray-500 text-center mt-10">
+                    Ask anything about your dataset...
+                  </p>
+                )}
+
                 {chatHistory.map((m, i) => (
                   <div
                     key={i}
@@ -350,11 +344,13 @@ export default function Dashboard() {
                     {m.text}
                   </div>
                 ))}
+
                 {chatLoading && (
                   <p className="text-gray-400 animate-pulse">
                     AI is thinking...
                   </p>
                 )}
+
                 <div ref={chatEndRef} />
               </div>
 
