@@ -164,7 +164,9 @@ export default function Dashboard() {
     return (
       <>
         <Navbar />
-        <div className="p-10 text-white text-center">Loading...</div>
+        <div className="min-h-screen flex items-center justify-center text-white">
+          Loading...
+        </div>
       </>
     );
 
@@ -173,173 +175,207 @@ export default function Dashboard() {
     <>
       <Navbar />
 
-      <div className="max-w-7xl mx-auto p-8 space-y-12 text-white">
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
+        <div className="max-w-7xl mx-auto p-8 space-y-10">
 
-        <h1 className="text-4xl font-bold">📊 Data Dashboard</h1>
+          <h1 className="text-4xl font-bold">📊 Data Dashboard</h1>
 
-        {/* STATS */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Stat title="Rows" value={rows} />
-          <Stat title="Columns" value={cols} />
-          <Stat title="Numeric Columns" value={numeric.length} />
-        </div>
-
-        {/* TABLE */}
-        <Section title="📄 Dataset Preview">
-          <div className="flex justify-end mb-2">
-            <select
-              value={previewLimit}
-              onChange={(e) => setPreviewLimit(Number(e.target.value))}
-              className="bg-black border px-3 py-1 rounded"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
+          {/* STATS */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <Stat title="Rows" value={rows} />
+            <Stat title="Columns" value={cols} />
+            <Stat title="Numeric Columns" value={numeric.length} />
           </div>
 
-          <div className="overflow-x-auto border rounded-xl">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-900">
-                <tr>
-                  {data?.preview?.[0] &&
-                    Object.keys(data.preview[0]).map((c: string) => (
-                      <th key={c} className="p-2">{c}</th>
-                    ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data?.preview?.map((row: any, i: number) => (
-                  <tr key={i}>
-                    {Object.values(row).map((v: any, j: number) => (
-                      <td key={j} className="p-2">{String(v)}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Section>
-
-        {/* AI */}
-        <Section title="🤖 AI Insights">
-          <div className="bg-green-900/20 border p-4 rounded-xl">
-            <pre className="text-green-400 whitespace-pre-wrap text-sm">
-              {aiInsights}
-            </pre>
-          </div>
-        </Section>
-
-        {/* CHART */}
-        <Section title="📊 Data Overview">
-          <div className="h-[300px] bg-black/40 border rounded-xl p-3">
-            <ResponsiveContainer>
-              <LineChart data={summaryChartData}>
-                <CartesianGrid stroke="#333" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line dataKey="value" stroke="#22c55e" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Section>
-
-        {/* PREDICT */}
-        <Section title="🎯 Prediction">
-          <div className="grid md:grid-cols-3 gap-3">
-            {Object.keys(inputData).map((c) => (
-              <input
-                key={c}
-                placeholder={c}
-                className="bg-black border p-2 rounded"
-                value={inputData[c]}
-                onChange={(e) =>
-                  setInputData({ ...inputData, [c]: e.target.value })
-                }
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={handlePredict}
-            className="mt-3 bg-green-600 px-4 py-2 rounded"
-          >
-            Predict
-          </button>
-
-          {prediction && (
-            <div className="mt-3 p-3 bg-green-900/30 border rounded">
-              <p className="font-semibold">Prediction Result:</p>
-              <p className="text-green-400 text-xl">
-                {prediction.prediction?.toFixed(2)}
-              </p>
+          {/* TABLE */}
+          <Section title="📄 Dataset Preview">
+            <div className="flex justify-end mb-2">
+              <select
+                value={previewLimit}
+                onChange={(e) => setPreviewLimit(Number(e.target.value))}
+                className="bg-black border border-white/10 px-3 py-1 rounded"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
             </div>
-          )}
-        </Section>
 
-        {/* FORECAST */}
-        <Section title="📈 Forecast">
-          <button
-            onClick={handleForecast}
-            className="bg-blue-600 px-4 py-2 rounded"
-          >
-            Generate Forecast
-          </button>
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-900 sticky top-0">
+                  <tr>
+                    {data?.preview?.[0] &&
+                      Object.keys(data.preview[0]).map((c: string) => (
+                        <th key={c} className="p-3 text-left text-gray-300">
+                          {c}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.preview?.map((row: any, i: number) => (
+                    <tr
+                      key={i}
+                      className={`border-t border-white/5 ${
+                        i % 2 === 0 ? "bg-white/5" : ""
+                      } hover:bg-white/10 transition`}
+                    >
+                      {Object.values(row).map((v: any, j: number) => (
+                        <td key={j} className="p-3">
+                          {String(v)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
 
-          {forecastChart && (
-            <div className="h-[300px] mt-3 bg-black/40 border rounded-xl p-3">
+          {/* AI */}
+          <Section title="🤖 AI Insights">
+            <div className="relative bg-gradient-to-br from-green-900/20 to-black border border-green-500/20 p-6 rounded-2xl">
+              <div className="absolute top-2 right-3 text-xs text-green-400">
+                AI GENERATED
+              </div>
+
+              <div className="text-green-300 text-sm space-y-2">
+                {aiInsights.split("\n").map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </div>
+          </Section>
+
+          {/* CHART */}
+          <Section title="📊 Data Overview">
+            <div className="h-[300px] bg-black/40 border border-white/10 rounded-xl p-3">
               <ResponsiveContainer>
-                <LineChart data={forecastChart}>
-                  <CartesianGrid stroke="#333" />
-                  <XAxis dataKey="year" />
+                <LineChart data={summaryChartData}>
+                  <CartesianGrid stroke="#444" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
-                  <Line dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#111", border: "none" }}
+                  />
+                  <Line
+                    dataKey="value"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          )}
-        </Section>
+          </Section>
 
-        {/* CHAT */}
-        <Section title="💬 Chat with your Data">
-          <div className="bg-black/40 border rounded-xl p-4 flex flex-col h-[350px]">
-
-            <div className="flex-1 overflow-y-auto space-y-3">
-              {chatHistory.map((m, i) => (
-                <div
-                  key={i}
-                  className={`p-2 rounded max-w-[70%] ${
-                    m.role === "user"
-                      ? "bg-blue-600 ml-auto"
-                      : "bg-gray-800 text-green-300"
-                  }`}
-                >
-                  {m.text}
-                </div>
+          {/* PREDICT */}
+          <Section title="🎯 Prediction">
+            <div className="grid md:grid-cols-3 gap-3">
+              {Object.keys(inputData).map((c) => (
+                <input
+                  key={c}
+                  placeholder={c}
+                  className="bg-black/50 border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400 p-2 rounded-xl outline-none"
+                  value={inputData[c]}
+                  onChange={(e) =>
+                    setInputData({ ...inputData, [c]: e.target.value })
+                  }
+                />
               ))}
-              {chatLoading && <p>Thinking...</p>}
-              <div ref={chatEndRef} />
             </div>
 
-            <div className="flex mt-3 gap-2">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 bg-black border p-2 rounded"
-                placeholder="Ask about your data..."
-              />
-              <button
-                onClick={handleChat}
-                className="bg-green-600 px-4 rounded"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </Section>
+            <button
+              onClick={handlePredict}
+              className="mt-3 bg-green-600 hover:bg-green-500 transition px-5 py-2 rounded-xl shadow-md active:scale-95"
+            >
+              Predict
+            </button>
 
+            {prediction && (
+              <div className="mt-3 p-3 bg-green-900/30 border border-green-500/20 rounded-xl">
+                <p className="font-semibold">Prediction Result:</p>
+                <p className="text-green-400 text-xl">
+                  {prediction.prediction?.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </Section>
+
+          {/* FORECAST */}
+          <Section title="📈 Forecast">
+            <button
+              onClick={handleForecast}
+              className="bg-blue-600 hover:bg-blue-500 transition px-5 py-2 rounded-xl shadow-md active:scale-95"
+            >
+              Generate Forecast
+            </button>
+
+            {forecastChart && (
+              <div className="h-[300px] mt-3 bg-black/40 border border-white/10 rounded-xl p-3">
+                <ResponsiveContainer>
+                  <LineChart data={forecastChart}>
+                    <CartesianGrid stroke="#444" strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#111", border: "none" }}
+                    />
+                    <Line
+                      dataKey="value"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      dot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Section>
+
+          {/* CHAT */}
+          <Section title="💬 Chat with your Data">
+            <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col h-[350px]">
+              <div className="flex-1 overflow-y-auto space-y-3">
+                {chatHistory.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`p-3 rounded-xl max-w-[70%] ${
+                      m.role === "user"
+                        ? "bg-blue-600 ml-auto"
+                        : "bg-gray-800 text-green-300"
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                ))}
+                {chatLoading && (
+                  <p className="text-gray-400 animate-pulse">
+                    AI is thinking...
+                  </p>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="flex mt-3 gap-2">
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  className="flex-1 bg-black border border-white/10 p-2 rounded-xl"
+                  placeholder="Ask about your data..."
+                />
+                <button
+                  onClick={handleChat}
+                  className="bg-green-600 px-4 rounded-xl"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </Section>
+
+        </div>
       </div>
     </>
   );
@@ -348,16 +384,16 @@ export default function Dashboard() {
 // UI
 function Stat({ title, value }: any) {
   return (
-    <div className="p-5 border rounded-xl bg-black/40">
-      <p className="text-gray-400">{title}</p>
-      <h2 className="text-2xl font-bold">{value}</h2>
+    <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-white/10 shadow-xl hover:-translate-y-1 transition">
+      <p className="text-gray-400 text-sm">{title}</p>
+      <h2 className="text-3xl font-bold text-green-400">{value}</h2>
     </div>
   );
 }
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 p-5 rounded-2xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg">
       <h2 className="text-xl font-semibold">{title}</h2>
       {children}
     </div>
