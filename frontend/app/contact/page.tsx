@@ -16,7 +16,7 @@ export default function Contact() {
 
         <div className="p-5 border border-white/10 rounded-xl">
           <h2 className="font-semibold">Email</h2>
-          <p className="text-green-400">your-email@gmail.com</p>
+          <p className="text-green-400">adsupport333@gmail.com/p>
         </div>
 
         <div className="p-5 border border-white/10 rounded-xl">
